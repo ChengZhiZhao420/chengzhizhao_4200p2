@@ -1,0 +1,199 @@
+import java.util.ArrayList;
+import java.util.Random;
+
+public class Queen {
+    /**
+     * Randomly generate a broad that contains one queen at each column
+     * @param N size of the queen
+     * @return Broad
+     */
+    public int[][] randomQueen(int N){
+        int[][] temp = new int[N][N];
+
+        for(int i = 0; i < temp.length; i++){
+            // Iterate through each column, randomly select the row
+            temp[new Random().nextInt(0, N - 1)][i] = 1; // 1 equal queen
+
+        }
+
+        return temp;
+    }
+
+    /**
+     * Get queen position of the broad
+     * @param puzzle a broad of the current state
+     * @return an 1D array that representing the position
+     */
+    public int[] getQueenPosition(int[][] puzzle){
+        int[] temp = new int[puzzle.length]; // same size as the number of columns of the current state
+
+        for(int i = 0; i < puzzle.length; i++){
+            for(int j = 0; j < puzzle.length; j++){
+                if(puzzle[j][i] == 1){ // if the queen is found
+                    temp[i] = j; // the element of this array is simply the row number of the queen in the current broad
+                }
+            }
+        }
+
+        return temp;
+    }
+
+    /**
+     * Generate all the possible successor, this method is use on the HillClimbing algo
+     * @param puzzle current state
+     * @return an ArrayList that contains all the successor
+     */
+    public ArrayList<int[]> generateSuccessor(int[][] puzzle){
+        ArrayList<int[]> possibleSuccessor = new ArrayList<>();
+
+        // since deep copying the array is less efficient, so I decide only use the queenPosition array to representing the move of the queen
+        for(int i = 0; i < puzzle.length; i++){
+            for(int j = 0; j < puzzle.length; j++){
+                int[] temp = getQueenPosition(puzzle); // get the queen position of the queen of the current state
+
+                if(temp[i] != j){
+                    temp[i] = j; // generate new state by moving one queen at the time, and moving it at the same column
+                    possibleSuccessor.add(temp);
+                }
+            }
+        }
+
+        return possibleSuccessor;
+    }
+
+    /**
+     * Generate the successor, use on MinConflict method
+     * @param puzzle current state
+     * @param conflictPosition contains the position of which queen is attacking others
+     * @return all the possible successors
+     */
+    public ArrayList<int[]> generateSuccessor(int[][] puzzle, int conflictPosition){
+        ArrayList<int[]> possibleSuccessor = new ArrayList<>();
+
+        for(int i = 0; i < puzzle.length; i++){
+            int[] queenPosition = getQueenPosition(puzzle); // same thing as last method
+
+            //this time only generate the successor of the given column number
+            if(i != queenPosition[conflictPosition]){
+                queenPosition[conflictPosition] = i;
+                possibleSuccessor.add(queenPosition);
+            }
+        }
+        return possibleSuccessor;
+    }
+
+    /**
+     * Generate the best neighbor of the current state
+     * @param listOfPossiblePuzzle all the possible successor
+     * @return best neighbor
+     */
+    public int[][] getNeighbor(ArrayList<int[]> listOfPossiblePuzzle){
+        int min = Integer.MAX_VALUE;
+        int[][] result = null;
+
+        for(int i = 0; i < listOfPossiblePuzzle.size(); i++){
+            int[] temp = listOfPossiblePuzzle.get(i);
+            int[][] temp1 = mapPuzzle(temp);
+            int h = getHeuristic(temp1);
+
+            // find which successor will have the less heuristic value
+            if(h < min){
+                min = h;
+                result = temp1;
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Map the queen into 2D array
+     * @param queenPosition contains all the queen position
+     * @return 2D array
+     */
+    public int[][] mapPuzzle(int[] queenPosition){
+        int[][] puzzle = new int[queenPosition.length][queenPosition.length];
+
+        for(int i = 0; i < queenPosition.length; i++){
+            puzzle[queenPosition[i]][i] = 1;
+        }
+
+        return puzzle;
+    }
+
+    /**
+     * count how many pair of queen is attacking each other
+     * @param puzzle current state
+     * @return total number of pair of queen is attacking each other
+     */
+    public int getHeuristic(int[][] puzzle){
+        int[] f_row = new int[puzzle.length]; // check the row
+        int[] f_mdiag = new int[puzzle.length * 2]; // check the main diagonal
+        int[] f_sdiag = new int[puzzle.length * 2]; // check the second diagonal
+        int[] queenPosition = getQueenPosition(puzzle);
+        int val = 0, result = 0;
+
+        for(int i = 0; i < queenPosition.length; i++){
+            val = queenPosition[i];
+            f_row[val]++;
+            f_mdiag[val + i]++; // assuming each diagonal have a special number which generated by the row and column
+            f_sdiag[puzzle.length - val + i]++;
+        }
+
+        for(int j = 0; j < (2 * queenPosition.length); j++){
+            int x = 0, y = 0, z = 0;
+            if(j < queenPosition.length){
+                x = f_row[j];
+            }
+            y = f_mdiag[j];
+            z = f_sdiag[j];
+
+            result += (x * (x - 1)) / 2;
+            result += (y * (y - 1)) / 2;
+            result += (z * (z - 1)) / 2;
+        }
+
+        return result;
+    }
+
+    /**
+     * get how many queens are attacking
+     * @param queenPosition
+     * @return the column position
+     */
+    public ArrayList<Integer> getConflict(int[] queenPosition){
+        ArrayList<Integer> result = new ArrayList<>();
+
+        for(int i = 0; i < queenPosition.length; i++){
+            int row = queenPosition[i];
+            int mDiag = queenPosition[i] + i;
+            int sDiag = queenPosition.length - queenPosition[i] + i;
+
+            for(int j = 0; j < queenPosition.length; j++){
+                int row1 = queenPosition[j];
+                int mDiag1 = queenPosition[j] + j;
+                int sDiag1 = queenPosition.length - queenPosition[j] + j;
+
+                if(j != i){
+                    if((row == row1 || mDiag == mDiag1 || sDiag == sDiag1)){
+                        result.add(i);
+                        break;
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    public void printPuzzle(int[][] puzzle){
+        for(int i = 0; i < puzzle.length; i++){
+            for(int j = 0; j < puzzle.length; j++){
+                System.out.print(puzzle[i][j] + "\t");
+            }
+            System.out.print("\n");
+        }
+    }
+
+
+
+}
