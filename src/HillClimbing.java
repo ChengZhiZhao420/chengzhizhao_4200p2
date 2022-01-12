@@ -2,6 +2,7 @@ import java.util.ArrayList;
 
 public class HillClimbing {
     private int size;
+    private int cost;
 
     public HillClimbing(int size){
         this.size = size;
@@ -10,7 +11,7 @@ public class HillClimbing {
     public void randomlyRestart(){
         Queen queen = new Queen();
         int[][] current = queen.randomQueen(size);
-        int cost = 0;
+        cost = 0;
 
         System.out.println("The initial state is: ");
         queen.printPuzzle(current);
@@ -25,7 +26,6 @@ public class HillClimbing {
                 break;
             }
             current = queen.randomQueen(size);
-            cost++;
         }
     }
 
@@ -34,7 +34,6 @@ public class HillClimbing {
      */
     public int[][] solve(int[][] currentState){
         Queen queen = new Queen();
-        int cost = 0;
         int[][] result = null;
         boolean found = false;
 
